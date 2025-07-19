@@ -145,8 +145,10 @@
                 const csvText = await response.text();
                 allData = parseCSV(csvText);
                 loadingMessage.style.display = 'none'; // Yükleniyor mesajını gizle
-                resultsTable.style.display = 'table'; // Tabloyu göster
-                displayAllData(); // Başlangıçta tüm veriyi göster
+                // Tablo ve "Hiç sonuç bulunamadı" mesajı başlangıçta gizli kalacak
+                // Sadece arama yapıldığında görüntülenecekler.
+                resultsTable.style.display = 'none';
+                noResultsMessage.style.display = 'none';
             } catch (error) {
                 console.error('CSV verisi çekilirken hata oluştu:', error);
                 loadingMessage.textContent = 'Veri yüklenemedi. Lütfen daha sonra tekrar deneyin.';
@@ -209,7 +211,10 @@
         function filterByMusteriKodu() {
             const musteriKoduInput = document.getElementById('musteriKodu').value.trim();
             if (musteriKoduInput === '') {
-                displayAllData(); // Eğer input boşsa tüm veriyi göster
+                // Eğer arama kutusu boşsa, tabloyu gizle ve "Hiç sonuç bulunamadı" mesajını göster
+                resultsTable.style.display = 'none';
+                noResultsMessage.style.display = 'block';
+                noResultsMessage.textContent = "Lütfen bir müşteri kodu girin."; // Kullanıcıya rehberlik et
                 return;
             }
 
@@ -219,18 +224,21 @@
             populateTable(filteredData);
         }
 
-        // Tüm veriyi gösteren fonksiyon
+        // Tüm veriyi gösteren fonksiyon (artık başlangıçta çağrılmayacak)
         function displayAllData() {
             populateTable(allData);
         }
 
-        // Filtreyi temizleyen ve tüm veriyi tekrar gösteren fonksiyon
+        // Filtreyi temizleyen ve tabloyu boşaltan fonksiyon
         function clearFilter() {
             document.getElementById('musteriKodu').value = '';
-            displayAllData();
+            resultsTableBody.innerHTML = ''; // Tablo içeriğini temizle
+            resultsTable.style.display = 'none'; // Tabloyu gizle
+            noResultsMessage.style.display = 'none'; // "Hiç sonuç bulunamadı" mesajını gizle
+            loadingMessage.style.display = 'none'; // Yükleniyor mesajını da gizle
         }
 
-        // Sayfa yüklendiğinde veriyi çek
+        // Sayfa yüklendiğinde veriyi çek, ancak tabloyu hemen gösterme
         document.addEventListener('DOMContentLoaded', fetchCSVData);
     </script>
 </body>
