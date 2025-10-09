@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Müşteri Dolap Sorgulama</title>
+    <title>Müşteri Dolap ve Barkod Sorgulama</title>
+    <!-- JsBarcode Kütüphanesi CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    
     <style>
         /* Genel Stil Ayarlamaları */
         body {
@@ -13,9 +16,8 @@
             background-color: #f4f4f4;
             color: #333;
             box-sizing: border-box;
-            overflow-x: hidden; /* Sayfanın genel yatay taşmasını engelle */
+            overflow-x: hidden;
         }
-
         .container {
             max-width: 900px;
             margin: auto;
@@ -25,19 +27,17 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
         }
-
         h1 {
             text-align: center;
             color: #000;
             margin-bottom: 30px;
             font-size: 2em;
         }
-
         /* Arama Kontrolleri Bölümü - Dikey Sıralama */
         .search-controls {
             display: flex;
-            flex-direction: column; /* Öğeleri dikey olarak sırala */
-            gap: 15px; /* Gruplar arası boşluk */
+            flex-direction: column; 
+            gap: 15px;
             margin-bottom: 20px;
             padding: 15px;
             border: 1px solid #ddd;
@@ -45,20 +45,17 @@
             background-color: #e9e9e9;
             box-sizing: border-box;
         }
-
         /* Müşteri Kodu Giriş Alanı */
         .input-group {
             flex-grow: 1;
             box-sizing: border-box;
         }
-
         .input-group label {
             font-weight: bold;
             margin-bottom: 5px;
             display: block;
             color: #555;
         }
-
         .input-group input[type="text"] {
             width: 100%;
             padding: 10px;
@@ -67,15 +64,13 @@
             box-sizing: border-box;
             font-size: 1em;
         }
-
         /* Buton Grubu */
         .button-group {
-            display: flex; /* Butonları yatay sırala */
-            gap: 10px; /* Butonlar arası boşluk */
-            flex-wrap: wrap; /* Küçük ekranlarda butonları alt alta kaydır */
-            justify-content: flex-end; /* Butonları sağa hizala */
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
-
         .button-group button {
             padding: 10px 20px;
             background-color: #007bff;
@@ -89,26 +84,20 @@
             box-sizing: border-box;
             transition: background-color 0.3s ease;
         }
-
         .button-group button:hover {
             background-color: #0056b3;
         }
-
-        /* Tablo Stilleri - Mobil Uyumlu Olmayacak */
+        /* Tablo Stilleri */
         #resultsTable {
-            width: 100%; /* Kapsayıcısının %100 genişliğini kapla */
+            width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            /* Tablo için responsive özellikler kaldırıldı */
         }
-
         #resultsTable th, #resultsTable td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: left;
-            /* min-width, max-width, overflow, text-overflow, white-space gibi özellikler mobil uyumluluk için kaldırıldı */
         }
-
         #resultsTable th {
             background-color: #007bff;
             color: white;
@@ -116,69 +105,88 @@
             top: 0;
             z-index: 1;
         }
-
         #resultsTable tbody tr:nth-child(even) {
             background-color: #f2f2f2;
         }
-
         #resultsTable tbody tr:hover {
             background-color: #ddd;
         }
-
         /* Mesaj Stilleri */
-        #noResults {
+        #noResults, #loadingMessage {
             text-align: center;
-            color: #dc3545;
             font-weight: bold;
             margin-top: 20px;
             padding: 10px;
+            border-radius: 4px;
+        }
+        #noResults {
+            color: #dc3545;
             border: 1px solid #dc3545;
             background-color: #ffe0e0;
-            border-radius: 4px;
         }
-
         #loadingMessage {
-            text-align: center;
             color: #007bff;
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 10px;
             background-color: #e0f0ff;
-            border-radius: 4px;
+        }
+        
+        /* Barkod Bölümü Stilleri */
+        .barcode-container {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        .barcode-container h2 {
+            font-size: 1.4em;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
         }
 
-        /* Medya Sorguları - Sadece Giriş ve Buton Bölümü İçin Geçerli */
+        /* Her bir barkod bloğu için stil */
+        .barcode-item {
+            margin-bottom: 25px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .barcode-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .barcode-item p {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #0056b3;
+        }
+
+        /* Medya Sorguları */        
         @media (max-width: 600px) {
             body {
                 padding: 10px;
             }
-
             .container {
                 padding: 15px;
             }
-
             h1 {
                 font-size: 1.6em;
             }
-
             .search-controls {
                 gap: 10px;
             }
-
             .button-group {
-                flex-direction: column; /* Butonları mobil ekranlarda dikey sırala */
-                align-items: stretch; /* Butonları tam genişliğe uzat */
+                flex-direction: column;
+                align-items: stretch;
                 justify-content: unset;
             }
-
             .button-group button {
-                width: 100%; /* Mobil cihazlarda tam genişlik */
+                width: 100%;
                 margin-top: 0;
             }
-
-            /* Tablo ile ilgili medya sorgusu stilleri kaldırıldı */
-            /* #resultsTable th, #resultsTable td için mobil ayarları kaldırıldı */
-        }
+        }    
     </style>
 </head>
 <body>
@@ -188,7 +196,7 @@
         <div class="search-controls">
             <div class="input-group">
                 <label for="musteriKodu">Müşteri Kodu:</label>
-                <input type="text" id="musteriKodu" placeholder="Müşteri Kodu Girin (örn: 101964)">
+                <input type="text" id="musteriKodu" placeholder="Müşteri Kodu Girin (örn: 254446)">
             </div>
 
             <div class="button-group">
@@ -215,16 +223,25 @@
             <tbody>
             </tbody>
         </table>
-    </div>
 
+        <!-- Barkod Görsel Alanı -->
+        <div id="barcodeContainer" class="barcode-container" style="display: none;">
+            <!-- Başlık Güncellendi -->
+            <h2>BARKOD GÖRSELİ</h2>
+            <!-- Dinamik SVG'ler buraya eklenecek -->
+        </div>
+
+    </div>
+    
     <script>
+        // Google Sheets'ten yayınlanmış CSV URL'si
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgKUCgvWuXiw1wfgKYxXUunbcV85ff6o0tR7KnL14bMXAmsRih-hsLbgLxzjeQkCkulmkE-6yFV5a9/pub?output=csv';
         let allData = [];
         const resultsTable = document.getElementById('resultsTable');
         const resultsTableBody = resultsTable.querySelector('tbody');
         const noResultsMessage = document.getElementById('noResults');
         const loadingMessage = document.getElementById('loadingMessage');
-        // responsive tablo konteyneri referansı kaldırıldı
+        const barcodeContainer = document.getElementById('barcodeContainer');
 
         async function fetchCSVData() {
             try {
@@ -232,8 +249,9 @@
                 const csvText = await response.text();
                 allData = parseCSV(csvText);
                 loadingMessage.style.display = 'none';
-                resultsTable.style.display = 'none'; // Tabloyu gizle
+                resultsTable.style.display = 'none';
                 noResultsMessage.style.display = 'none';
+                barcodeContainer.style.display = 'none';
             } catch (error) {
                 console.error('CSV verisi çekilirken hata oluştu:', error);
                 loadingMessage.textContent = 'Veri yüklenemedi. Lütfen daha sonra tekrar deneyin.';
@@ -243,7 +261,7 @@
 
         function parseCSV(csv) {
             const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(header => header.trim());
+            const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
             const parsedData = [];
 
             for (let i = 1; i < lines.length; i++) {
@@ -254,32 +272,42 @@
                 const row = {};
                 for (let j = 0; j < headers.length; j++) {
                     let headerKey = headers[j];
-                    if (headerKey === "Müşteri Kodu") headerKey = "Müşteri Kodu";
-                    if (headerKey === "Müşteri Adı") headerKey = "Müşteri Adı";
-
-                    row[headerKey] = values[j] ? values[j].trim() : '';
+                    row[headerKey] = (values[j] ? values[j].trim() : '').replace(/"/g, '');
                 }
                 parsedData.push(row);
             }
             return parsedData;
         }
 
+        // [GÜNCELLEME: Barkod Hata Kontrolü Eklendi]
         function populateTable(dataToDisplay) {
             resultsTableBody.innerHTML = '';
+            
             if (dataToDisplay.length === 0) {
                 noResultsMessage.style.display = 'block';
-                resultsTable.style.display = 'none'; // Tabloyu gizle
-                return;
+                resultsTable.style.display = 'none';
             } else {
                 noResultsMessage.style.display = 'none';
-                resultsTable.style.display = 'table'; // Tabloyu göster
+                resultsTable.style.display = 'table';
             }
 
             dataToDisplay.forEach(item => {
                 const row = resultsTableBody.insertRow();
+                // Veri tablosunu doldur
                 row.insertCell().textContent = item["Müşteri Kodu"] || '';
                 row.insertCell().textContent = item["Müşteri Adı"] || '';
-                row.insertCell().textContent = item["Barkod"] || '';
+                
+                // Barkod Alanı Kontrolü
+                const barkodCell = row.insertCell();
+                const barkodValue = item["Barkod"] ? item["Barkod"].trim() : '';
+
+                if (barkodValue === '') {
+                    // Barkod yoksa uyarı göster
+                    barkodCell.innerHTML = '<span style="color: red; font-weight: bold;">Barkod Yok</span>';
+                } else {
+                    barkodCell.textContent = barkodValue;
+                }
+                
                 row.insertCell().textContent = item["Model"] || '';
                 row.insertCell().textContent = item["Grup"] || '';
                 row.insertCell().textContent = item["Statü"] || '';
@@ -287,23 +315,84 @@
             });
         }
 
+        // [GÜNCELLEME: Tam Eşleşme Zorunluluğu Eklendi]
         function filterByMusteriKodu() {
             const musteriKoduInput = document.getElementById('musteriKodu').value.trim();
+            
+            // Barkod alanını temizle ve başlığı geri ekle
+            barcodeContainer.style.display = 'none';
+            // BAŞLIK GÜNCELLENDİ
+            barcodeContainer.innerHTML = '<h2>BARKOD GÖRSELİ</h2>'; 
+            let foundValidBarcode = false; 
+
             if (musteriKoduInput === '') {
-                resultsTable.style.display = 'none';
+                populateTable([]);
                 noResultsMessage.style.display = 'block';
                 noResultsMessage.textContent = "Lütfen bir müşteri kodu girin.";
                 return;
             }
 
+            // Müşteri kodu filtreleme (TAM EŞLEŞME)
+            // item["Müşteri Kodu"] alanının boşlukları temizlendikten sonra, girdi ile tam olarak eşleşip eşleşmediği kontrol edilir.
             const filteredData = allData.filter(item =>
-                item["Müşteri Kodu"] && item["Müşteri Kodu"].includes(musteriKoduInput)
+                item["Müşteri Kodu"] && item["Müşteri Kodu"].trim() === musteriKoduInput
             );
-            populateTable(filteredData);
-        }
 
-        function displayAllData() {
-            populateTable(allData);
+            populateTable(filteredData);
+
+            // BARCOD OLUŞTURMA İŞLEMİ (Tüm sonuçlar için)
+            if (filteredData.length > 0) {
+                
+                filteredData.forEach((item, index) => {
+                    const currentBarcode = item["Barkod"] ? item["Barkod"].trim() : '';
+                    const currentModel = item["Model"];
+
+                    if (currentBarcode && currentBarcode.length > 0) {
+                        try {
+                            // 1. Her bir barkod için yeni bir kapsayıcı div oluştur
+                            const barcodeItemDiv = document.createElement('div');
+                            barcodeItemDiv.className = 'barcode-item';
+                            
+                            // 2. Barkod numarasını ve modelini gösteren bilgiyi ekle
+                            const infoP = document.createElement('p');
+                            infoP.textContent = `Barkod (Model: ${currentModel || 'Bilinmiyor'}): ${currentBarcode}`;
+                            barcodeItemDiv.appendChild(infoP);
+
+                            // 3. Yeni bir SVG elementi oluştur ve eşsiz bir ID ver
+                            const svgId = `barcodeDisplay_${index}`;
+                            const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                            svgElement.id = svgId;
+                            
+                            barcodeItemDiv.appendChild(svgElement);
+                            barcodeContainer.appendChild(barcodeItemDiv); // Ana konteynere ekle
+
+                            // 4. JsBarcode ile çiz
+                            // CODE128 formatı kullanılarak görsel oluşturulur
+                            JsBarcode(`#${svgId}`, currentBarcode, {
+                                format: "CODE128", 
+                                displayValue: true,
+                                text: currentBarcode,
+                                margin: 10,
+                                width: 2,
+                                height: 100,
+                                textMargin: 5
+                            });
+                            foundValidBarcode = true;
+                        } catch (e) {
+                            // JsBarcode çizim hatası oluşursa (örn. geçersiz karakter)
+                            console.error(`Barkod (${currentBarcode}) oluşturulurken hata oluştu:`, e);
+                            barcodeItemDiv.innerHTML += `<p style="color: red;">Bu barkod için görsel oluşturulamadı (Geçersiz format).</p>`;
+                            barcodeContainer.appendChild(barcodeItemDiv); // Hata mesajını göster
+                        }
+                    } 
+                    // Not: Barkod boşsa buraya düşmez. Tabloda "Barkod Yok" uyarısı gösterilir.
+                });
+                
+                // En az bir geçerli barkod varsa ana konteyneri göster
+                if (foundValidBarcode) {
+                    barcodeContainer.style.display = 'block';
+                }
+            }
         }
 
         function clearFilter() {
@@ -312,10 +401,15 @@
             resultsTable.style.display = 'none';
             noResultsMessage.style.display = 'none';
             loadingMessage.style.display = 'none';
+            
+            // Barkod konteynerini temizle ve gizle
+            barcodeContainer.style.display = 'none';
+            // BAŞLIK GÜNCELLENDİ
+            barcodeContainer.innerHTML = '<h2>BARKOD GÖRSELİ</h2>'; 
         }
 
+        // Sayfa yüklendiğinde verileri çek
         document.addEventListener('DOMContentLoaded', fetchCSVData);
     </script>
 </body>
-
 </html>
