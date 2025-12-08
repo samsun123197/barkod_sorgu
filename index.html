@@ -410,6 +410,41 @@
 
         // Sayfa yüklendiğinde verileri çek
         document.addEventListener('DOMContentLoaded', fetchCSVData);
+        // ========== OTOMATİK SORGULAMA İŞLEVİ (URL PARAMETRESİ İLE) ==========
+
+// URL'den belirli bir parametreyi (örneğin 'query') okumak için yardımcı fonksiyon
+function getQueryParameter(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+    const results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+// Sayfa yüklendikten sonra çalışacak ana blok
+window.addEventListener('load', function() {
+    const musteriKoduInput = document.getElementById('musteriKodu');
+    
+    // URL'deki 'query' parametresini oku
+    const musteriKodu = getQueryParameter('query'); 
+
+    if (musteriKodu && musteriKoduInput) {
+        // 1. Müşteri kodunu input alanına yaz
+        musteriKoduInput.value = musteriKodu;
+        
+        // 2. Sorgulama fonksiyonunu çalıştır (varsa)
+        // PapaParse'ın veri yüklemesini beklemek gerektiği için,
+        // veri yükleme tamamlandığında çağrılması en güvenlisidir.
+        // Ancak bu yapıda, sorgulayı direkt çağırıyoruz,
+        // (Umarız barkod_sorgu sayfasındaki veri çekimi hızlıdır veya sorgula() içinde bekleniyordur.)
+        if (typeof sorgula === 'function') {
+             // Not: Eğer barkod_sorgu sayfasında veri yükleme asenkron ise ve 'sorgula'
+             // fonksiyonu global olarak PapaParse'ın 'complete' callback'i içinde çağrılmıyorsa
+             // burada küçük bir gecikme eklemek gerekebilir. Şimdilik direkt çağırıyoruz.
+            sorgula(); 
+        }
+    }
+});
     </script>
 </body>
 </html>
+
